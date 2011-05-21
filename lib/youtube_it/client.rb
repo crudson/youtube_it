@@ -138,6 +138,10 @@ class YouTubeIt
       client.profile(user_id)
     end
 
+    def contacts(user_id)
+      client.contacts(user_id)
+    end
+
     def playlist(playlist_id)
       client.playlist playlist_id
     end

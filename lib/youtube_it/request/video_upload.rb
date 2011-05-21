@@ -75,19 +75,19 @@ class YouTubeIt
       def upload(data, opts = {})
         response = nil
         @opts    = { :mime_type => 'video/mp4',
-                     :title => '',
-                     :description => '',
-                     :category => '',
-                     :keywords => [] }.merge(opts)
+          :title => '',
+          :description => '',
+          :category => '',
+          :keywords => [] }.merge(opts)
 
         @opts[:filename] ||= generate_uniq_filename_from(data)
 
         post_body_io = generate_upload_io(video_xml, data)
 
         upload_header = {
-            "Slug"           => "#{@opts[:filename]}",
-            "Content-Type"   => "multipart/related; boundary=#{boundary}",
-            "Content-Length" => "#{post_body_io.expected_length}",
+          "Slug"           => "#{@opts[:filename]}",
+          "Content-Type"   => "multipart/related; boundary=#{boundary}",
+          "Content-Length" => "#{post_body_io.expected_length}",
         }
 
         if @access_token.nil?
@@ -184,7 +184,7 @@ class YouTubeIt
         end
         raise_on_faulty_response(response)
         return {:url    => "#{response.body[/<url>(.+)<\/url>/, 1]}?nexturl=#{nexturl}",
-                :token  => response.body[/<token>(.+)<\/token>/, 1]}
+          :token  => response.body[/<token>(.+)<\/token>/, 1]}
       end
 
       def add_comment(video_id, comment)
@@ -264,6 +264,16 @@ class YouTubeIt
       end
 
       def profile(user_id)
+        # http://gdata.youtube.com/feeds/api/users/username/contacts?v=2
+        contacts_url = "/feeds/api/users/%s/contacts?v=2" % user_id
+        http_connection do |session|
+          response = session.get(contacts_url)
+          raise_on_faulty_response(response)
+          return YouTubeIt::Parser::ContactsFeedParser.new(response).parse
+        end
+      end
+
+      def contacts(user_id)
         profile_url = "/feeds/api/users/%s?v=2" % user_id
         http_connection do |session|
           response = session.get(profile_url)
@@ -453,10 +463,10 @@ class YouTubeIt
 
       def authorization_headers
         header = {
-                  "X-GData-Client" => "#{@client_id}",
-                  "X-GData-Key"    => "key=#{@dev_key}",
-                  "GData-Version" => "2",
-                }
+          "X-GData-Client" => "#{@client_id}",
+          "X-GData-Key"    => "key=#{@dev_key}",
+          "GData-Version" => "2",
+        }
         if @authsub_token
           header.merge!("Authorization"  => "AuthSub token=#{@authsub_token}")
         else
@@ -488,7 +498,7 @@ class YouTubeIt
         msg = parse_upload_error_from(response.body.gsub(/\n/, ''))
 
         if response_code == 403 || response_code == 401
-        #if response_code / 10 == 40
+          #if response_code / 10 == 40
           raise AuthenticationError, msg
         elsif response_code / 10 != 20 # Response in 20x means success
           raise UploadError, msg

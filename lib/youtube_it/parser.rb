@@ -33,20 +33,20 @@ class YouTubeIt
       end
 
       protected
-        def parse_entry(entry)
-          author = YouTubeIt::Model::Author.new(
-            :name => entry.elements["author"].elements["name"].text,
-            :uri => entry.elements["author"].elements["uri"].text
-          )
-          YouTubeIt::Model::Comment.new(
-            :author => author,
-            :content => entry.elements["content"].text,
-            :published => entry.elements["published"].text,
-            :title => entry.elements["title"].text,
-            :updated => entry.elements["updated "].text,
-            :url => entry.elements["id"].text
-          )
-        end
+      def parse_entry(entry)
+        author = YouTubeIt::Model::Author.new(
+          :name => entry.elements["author"].elements["name"].text,
+          :uri => entry.elements["author"].elements["uri"].text
+        )
+        YouTubeIt::Model::Comment.new(
+          :author => author,
+          :content => entry.elements["content"].text,
+          :published => entry.elements["published"].text,
+          :title => entry.elements["title"].text,
+          :updated => entry.elements["updated "].text,
+          :url => entry.elements["id"].text
+        )
+      end
     end
 
     class PlaylistFeedParser < FeedParser #:nodoc:
@@ -119,6 +119,96 @@ class YouTubeIt
       end
     end
 
+    # <?xml version='1.0' encoding='UTF-8'?>
+    # <feed xmlns='http://www.w3.org/2005/Atom'
+    #  xmlns:openSearch='http://a9.com/-/spec/opensearch/1.1/'
+    #  xmlns:batch='http://schemas.google.com/gdata/batch'
+    #  xmlns:yt='http://gdata.youtube.com/schemas/2007'
+    #  xmlns:gd='http://schemas.google.com/g/2005'
+    #  gd:etag='W/&quot;Dk4MQX05fyp7ImA9WxRQGUk.&quot;'>
+    #  <id>tag:youtube,2008:user:andyland74:contacts</id>
+    #  <updated>2008-07-21T17:34:54.371Z</updated>
+    #  <category scheme='http://schemas.google.com/g/2005#kind'
+    #    term='http://gdata.youtube.com/schemas/2007#friend'/>
+    #  <title>Contacts of andyland74</title>
+    #  <logo>http://www.youtube.com/img/pic_youtubelogo_123x63.gif</logo>
+    #  <link rel='alternate' type='application/atom+xml'
+    #    href='http://www.youtube.com/profile_friends?user=andyland74'/>
+    #  <link rel='http://schemas.google.com/g/2005#feed'
+    #    type='application/atom+xml'
+    #    href='http://gdata.youtube.com/feeds/api/users/andyland74/contacts?v=2'/>
+    #  <link rel='http://schemas.google.com/g/2005#post'
+    #    type='application/atom+xml'
+    #    href='http://gdata.youtube.com/feeds/api/users/andyland74/contacts?v=2'/>
+    #  <link rel='http://schemas.google.com/g/2005#batch'
+    #    type='application/atom+xml'
+    #    href='http://gdata.youtube.com/feeds/api/users/andyland74/contacts/batch?v=2'/>
+    #  <link rel='self' type='application/atom+xml'
+    #    href='http://gdata.youtube.com/feeds/api/users/andyland74/contacts?...'/>
+    #  <link rel='service' type='application/atomsvc+xml'
+    #    href='http://gdata.youtube.com/feeds/api/users/andyland74/contacts?alt=...'/>
+    #  <author>
+    #    <name>andyland74</name>
+    #    <uri>http://gdata.youtube.com/feeds/api/users/andyland74</uri>
+    #  </author>
+    #  <generator version='2.0'
+    #    uri='http://gdata.youtube.com/'>YouTube data API</generator>
+    #  <openSearch:totalResults>4</openSearch:totalResults>
+    #  <openSearch:startIndex>1</openSearch:startIndex>
+    #  <openSearch:itemsPerPage>25</openSearch:itemsPerPage>
+    #  <entry gd:etag='W/&quot;Dk4MQX05fyp7ImA9WxRQGUk.&quot;'>
+    #    <id>tag:youtube,2008:user:andyland74:contact:davydanciu</id>
+    #    <published>2007-10-17T10:45:41.000-07:00</published>
+    #    <updated>2008-07-21T17:34:54.370Z</updated>
+    #    <app:edited xmlns:app='http://www.w3.org/2007/app'>
+    2008-07-21T17:34:54.370Z</app:edited>
+    <category scheme=#'http://schemas.google.com/g/2005#kind'
+    #      term='http://gdata.youtube.com/schemas/2007#friend'/>
+    #    <category scheme='http://gdata.youtube.com/schemas/2007/contact.cat'
+    #      term='Friends'/>
+    #    <title>davydanciu</title>
+    #    <link rel='related' type='application/atom+xml'
+    #      href='http://gdata.youtube.com/feeds/api/users/davydanciu?v=2'/>
+    #    <link rel='alternate' type='text/html'
+    #      href='http://www.youtube.com/profile?user=davydanciu'/>
+    #    <link rel='self' type='application/atom+xml'
+    #      href='http://gdata.youtube.com/feeds/api/users/andyland74/contacts/davydanciu?v=2'/>
+    #    <link rel='edit' type='application/atom+xml'
+    #      href='http://gdata.youtube.com/feeds/api/users/andyland74/contacts/davydanciu?v=2'/>
+    #    <author>
+    #      <name>andyland74</name>
+    #      <uri>http://gdata.youtube.com/feeds/api/users/andyland74</uri>
+    #    </author>
+    #    <yt:username>davydanciu</yt:username>
+    #    <yt:status>accepted</yt:status>
+    #  </entry>
+    #  <entry>
+    #    ...
+    #  </entry>
+    #  ...
+    #</feed>
+    class ContactsFeedParser < FeedParser #:nodoc:
+      def parse_content(content)
+        contacts = []
+        doc     = REXML::Document.new(content)
+        feed    = doc.elements["feed"]
+        if feed
+          feed_id            = feed.elements["id"].text
+          updated_at         = Time.parse(feed.elements["updated"].text)
+          total_result_count = feed.elements["openSearch:totalResults"].text.to_i
+          offset             = feed.elements["openSearch:startIndex"].text.to_i
+          max_result_count   = feed.elements["openSearch:itemsPerPage"].text.to_i
+
+          feed.elements.each("entry") do |entry|
+            contacts << YouTubeIt::Model::Contact.new(
+              :status => entry.elements["yt:status"].text,
+              :username => entry.elements["yt:username"].text)
+          end
+        end
+        contacts
+      end
+    end
+
     class VideoFeedParser < FeedParser #:nodoc:
 
       def parse_content(content)
@@ -127,7 +217,7 @@ class YouTubeIt
         parse_entry(entry)
       end
 
-    protected
+      protected
       def parse_entry(entry)
         video_id = entry.elements["id"].text
         published_at  = entry.elements["published"] ? Time.parse(entry.elements["published"].text) : nil
@@ -142,8 +232,8 @@ class YouTubeIt
           if (scheme =~ /\/categories\.cat$/)
             # it's a category
             categories << YouTubeIt::Model::Category.new(
-                            :term => category.attributes["term"],
-                            :label => category.attributes["label"])
+              :term => category.attributes["term"],
+              :label => category.attributes["label"])
 
           elsif (scheme =~ /\/keywords\.cat$/)
             # it's a keyword
@@ -159,8 +249,8 @@ class YouTubeIt
         author = nil
         if author_element
           author = YouTubeIt::Model::Author.new(
-                     :name => author_element.elements["name"].text,
-                     :uri => author_element.elements["uri"].text)
+            :name => author_element.elements["name"].text,
+            :uri => author_element.elements["uri"].text)
         end
         media_group = entry.elements["media:group"]
 
@@ -196,10 +286,10 @@ class YouTubeIt
         media_group.elements.each("media:thumbnail") do |thumb_element|
           # TODO: convert time HH:MM:ss string to seconds?
           thumbnails << YouTubeIt::Model::Thumbnail.new(
-                          :url => thumb_element.attributes["url"],
-                          :height => thumb_element.attributes["height"].to_i,
-                          :width => thumb_element.attributes["width"].to_i,
-                          :time => thumb_element.attributes["time"])
+            :url => thumb_element.attributes["url"],
+            :height => thumb_element.attributes["height"].to_i,
+            :width => thumb_element.attributes["width"].to_i,
+            :time => thumb_element.attributes["time"])
         end
 
         rating_element = entry.elements["gd:rating"]
@@ -281,7 +371,7 @@ class YouTubeIt
 
     class VideosFeedParser < VideoFeedParser #:nodoc:
 
-    private
+      private
       def parse_content(content)
         videos  = []
         doc     = REXML::Document.new(content)

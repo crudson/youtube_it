@@ -7,6 +7,10 @@
   queries to obtain well-targeted video search results.  In addition, standard video management 
   including but not limited to uploading, deleting, updating, like, dislike, ratings and
   comments.
+
+== This Fork
+
+  Added listing of contacts for a user.
   
 == INSTALLATION & SETUP:
   * Create a youtube account.
