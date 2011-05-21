@@ -121,15 +121,15 @@ class YouTubeIt
 
     class ContactsFeedParser < FeedParser #:nodoc:
       def parse_content(content)
-        contacts = []
-        doc     = REXML::Document.new(content)
+        contacts = YouTubeIt::Model::ContactSet.new
+        doc     = REXML::Document.new(content.body)
         feed    = doc.elements["feed"]
         if feed
-          feed_id            = feed.elements["id"].text
-          updated_at         = Time.parse(feed.elements["updated"].text)
-          total_result_count = feed.elements["openSearch:totalResults"].text.to_i
-          offset             = feed.elements["openSearch:startIndex"].text.to_i
-          max_result_count   = feed.elements["openSearch:itemsPerPage"].text.to_i
+          #          feed_id            = feed.elements["id"].text
+          contacts.updated_at         = Time.parse(feed.elements["updated"].text)
+          contacts.total_result_count = feed.elements["openSearch:totalResults"].text.to_i
+          #          offset             = feed.elements["openSearch:startIndex"].text.to_i
+          #          max_result_count   = feed.elements["openSearch:itemsPerPage"].text.to_i
 
           feed.elements.each("entry") do |entry|
             contacts << YouTubeIt::Model::Contact.new(

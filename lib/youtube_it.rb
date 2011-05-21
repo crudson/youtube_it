@@ -53,6 +53,7 @@ end
   model/category
   model/comment
   model/contact
+  model/contact_set
   model/content
   model/playlist
   model/rating
